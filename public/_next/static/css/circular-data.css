@@ -3,6 +3,11 @@
     vertical-align: middle
 }
 
+.CircularProgressbar .CircularProgressbar-path {
+    stroke: #3e98c7;
+    stroke-linecap: round;
+    transition: stroke-dashoffset .5s ease 0s
+}
 
 .CircularProgressbar .CircularProgressbar-trail {
     stroke: #d6d6d6;
