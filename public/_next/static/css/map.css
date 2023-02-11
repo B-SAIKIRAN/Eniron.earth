@@ -1,0 +1,7 @@
+.map_fix{
+  display: flex;
+  justify-content: center;
+  margin-bottom: 50px;
+  height: 100%;
+  width: 100%;
+}
