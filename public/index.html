@@ -1,0 +1,652 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>Environ .earth</title>
+    <link rel="stylesheet" href="/_next/static/css/main.css" data-n-g="" />
+    <link rel="icon" type="image/x-icon" href="favicon.ico">
+    <link rel="stylesheet" href="/_next/static/css/circular-data.css" data-n-p="" /><noscript data-n-css=""></noscript>
+</head>
+
+<body>
+    <div id="__next">
+        <div id="skiplink-container"><a href="#content" class="block bg-darkGrape text-center text-white w-full sr-only focus:not-sr-only focus:relative"><span class="flex items-center justify-center py-5">Skip to main content</span></a></div>
+        <header class="bg-white header ">
+            <div class="container-header py-4 xl:py-6">
+                <div class="py-2 xl:py-3 md:px-4 border-t border-b relative">
+                    <nav class="flex items-center flex-wrap justify-between lg:grid lg:grid-flow-col">
+                        <div class="flex shrink-0 items-center lg:block"><a class="md:mr-12" href="/"><img width="192px" height="108px" src="/logo.svg" alt="Environ logo" class="block logo cursor-pointer" loading="lazy" /></a></div>
+                        <div class="flex items-center flex-wrap justify-end xl:grid xl:grid-flow-col">
+                            <div class="hidden xl:block pr-7 is-collapsed">
+                                <ul class="font-franzSansBold flex flex-col gap-2 w-full xl:gap-8 xl:flex-row xl:items-center xl:justify-between" id="primary-navigation">
+
+                                    <li class="relative"><a href="/methodology.html"  class="block py-2 text-gray-700 w-full transition duration-200 ease-linear hover:text-primary uppercase">Methodology</a></li>
+                                    <li class="relative"><a href="/about.html" class="block py-2 text-gray-700 w-full transition duration-200 ease-linear hover:text-primary uppercase">About Us</a></li>
+
+                                    <li class="relative"><a href="/apidoc.html" rel="noreferrer" class="block py-2 px-5 bg-brightRed rounded-md text-white w-full transition duration-200 ease-linear uppercase">API DOCUMENTATION</a></li>
+                                </ul>
+                            </div>
+
+                </nav>
+            </div>
+    </div>
+    </header>
+
+<div class="map_fix">
+  <link rel="shortcut icon" type="image/x-icon" href="favicon.ico" />
+  <link rel="icon" type="image/x-icon" href="favicon.ico">
+  <link rel="stylesheet" href="/_next/static/css/map.css">
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.2/dist/leaflet.css" integrity="sha256-sA+zWATbFveLLNqWO2gtiw3HL/lh1giY/Inf1BJ0z14=" crossorigin=""/>
+  <script src="https://unpkg.com/leaflet@1.9.2/dist/leaflet.js" integrity="sha256-o9N1jGDZrf5tS+Ft4gbIK7mYMipq9lqpVJ91xHSyKhg=" crossorigin=""></script>
+  <link rel="stylesheet" href="https://d19vzq90twjlae.cloudfront.net/leaflet-0.7/leaflet.css" />
+  <style>
+    .leaflet-container {
+  height: 550px;
+  width: 1500px;
+  max-width: 100%;
+  max-height: 100%;
+  object-fit: cover;
+  }
+.info { padding: 6px 8px; font: 14px/16px Arial, Helvetica, sans-serif; background: white; background: rgba(255,255,255,0.8); box-shadow: 0 0 15px rgba(0,0,0,0.2); border-radius: 5px; } .info h4 { margin: 0 0 5px; color: #777; }
+.legend { text-align: left; line-height: 18px; color: #555; } .legend i { width: 18px; height: 18px; float: left; margin-right: 8px; opacity: 0.7; }
+  </style>
+
+
+  </head>
+  <body>
+
+  <div id='map'></div>
+
+  <script type="text/javascript" src="ramuwithcolour.js"></script>
+
+  <script type="text/javascript">
+
+  const map = L.map('map').setView([37.8, -96], 4);
+
+  const tiles = L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
+  maxZoom: 19,
+  attribution: '&copy; <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+  }).addTo(map);
+
+  const info = L.control();
+
+	info.onAdd = function (map) {
+		this._div = L.DomUtil.create('div', 'info');
+		this.update();
+		return this._div;
+	};
+
+	info.update = function (props) {
+		const contents = props ? `<b>${props.NAME}</b><br />${props.density} units` : 'Hover over a state';
+		this._div.innerHTML = `<h4>Green index</h4>${contents}`;
+	};
+
+	info.addTo(map);
+
+
+  // get color depending on population density value
+  function getColor(density) {
+  		return density == 7 ?  '#04647e' :
+  			density == 5  ?  '#1b8366' :
+  			density == 2  ?  '#E31A1C' :
+  			density == 1  ?  '#462800' :
+  			density == 3  ?  '#935500' :
+  			density == 6   ? '#078db2' :
+  			density == 4   ? '#fb9100' : '#7f817f';
+  	}
+
+  function style(feature) {
+  return {
+  weight: 2,
+  opacity: 1,
+  color: 'white',
+  dashArray: '3',
+  fillOpacity: 0.7,
+  fillColor: getColor(feature.properties.density)
+  };
+  }
+
+  function highlightFeature(e) {
+    const layer = e.target;
+
+    layer.setStyle({
+      weight: 5,
+      color: '#666',
+      dashArray: '',
+      fillOpacity: 0.7
+    });
+
+    layer.bringToFront();
+
+    info.update(layer.feature.properties);
+  }
+  /* global statesData */
+  const geojson = L.geoJson(statesData, {
+  style,
+  }).addTo(map);
+
+  function resetHighlight(e) {
+    geojson.resetStyle(e.target);
+    info.update();
+  }
+
+  function zoomToFeature(e) {
+    map.fitBounds(e.target.getBounds());
+  }
+
+  function onEachFeature(feature, layer) {
+    layer.on({
+      mouseover: highlightFeature,
+      mouseout: resetHighlight,
+      click: zoomToFeature
+    });
+  }
+
+
+geojson = L.geoJson(statesData, {
+    style: style,
+    onEachFeature: onEachFeature
+}).addTo(map);
+
+
+
+</script>
+
+</div>
+
+    <main id="content">
+        <div class="bg-brandGray mb-16">
+            <div class="container">
+                <div class="flex flex-col lg:flex-row covering-flex relative">
+                    <div class="flex flex-col lg:w-1/2 xl:w-3/5 py-16">
+                        <h2 class="text-center font-franzSansExtraBold tracking-wider text-darkGrape text-3xl mb-2 uppercase">How do we calculate "Green Index"</h2>
+                        <div class="divider-colour-border new-index-border-width flex mx-auto mb-12"></div>
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-y-6 mb-12">
+                            <div class="justify-self-center">
+                                <h2 class="font-franzSansMedium text-center text-sand mb-4 tracking-wide text-xl">Targets</h2>
+                                <div class="px-8 circle-dimensions"><svg class="CircularProgressbar " viewBox="0 0 100 100" data-test-id="CircularProgressbar"><circle class="CircularProgressbar-background" style="fill:transparent" cx="50" cy="50" r="50"></circle><path class="CircularProgressbar-trail" style="stroke-dasharray:282.7433388230814px 282.7433388230814px;stroke-dashoffset:0px" d="
+      M 50,50
+      m 0,-45
+      a 45,45 0 1 1 0,90
+      a 45,45 0 1 1 0,-90
+    " stroke-width="10" fill-opacity="0"></path><path class="CircularProgressbar-path" style="stroke-linecap:butt;stroke:#A5865C;stroke-dasharray:282.7433388230814px 282.7433388230814px;stroke-dashoffset:187.6px" d="
+      M 50,50
+      m 0,-45
+      a 45,45 0 1 1 0,90
+      a 45,45 0 1 1 0,-90
+    " stroke-width="10" fill-opacity="0"></path><text class="CircularProgressbar-text" style="fill:#A5865C" x="50" y="50">33%</text></svg></div>
+                            </div>
+                            <div class="justify-self-center">
+                                <h2 class="font-franzSansMedium text-center text-gdpGreen mb-4 mt-4 md:mt-0 tracking-wide text-xl">Coverage</h2>
+                                <div class="px-8 circle-dimensions"><svg class="CircularProgressbar " viewBox="0 0 100 100" data-test-id="CircularProgressbar"><circle class="CircularProgressbar-background" style="fill:transparent" cx="50" cy="50" r="50"></circle><path class="CircularProgressbar-trail" style="stroke-dasharray:282.7433388230814px 282.7433388230814px;stroke-dashoffset:0px" d="
+      M 50,50
+      m 0,-45
+      a 45,45 0 1 1 0,90
+      a 45,45 0 1 1 0,-90
+    " stroke-width="10" fill-opacity="0"></path><path class="CircularProgressbar-path" style="stroke-linecap:butt;stroke:#73A649;stroke-dasharray:282.7433388230814px 282.7433388230814px;stroke-dashoffset:187.6px" d="
+      M 50,50
+      m 0,-45
+      a 45,45 0 1 1 0,90
+      a 45,45 0 1 1 0,-90
+    " stroke-width="10" fill-opacity="0"></path><text class="CircularProgressbar-text" style="fill:#73A649" x="50" y="50">33%</text></svg></div>
+                            </div>
+                            <div class="justify-self-center">
+                                <h2 class="font-franzSansMedium text-center text-oceanBlue mb-4 mt-4 md:mt-0 tracking-wide text-xl">Governance</h2>
+                                <div class="px-8 circle-dimensions"><svg class="CircularProgressbar " viewBox="0 0 100 100" data-test-id="CircularProgressbar"><circle class="CircularProgressbar-background" style="fill:transparent" cx="50" cy="50" r="50"></circle><path class="CircularProgressbar-trail" style="stroke-dasharray:282.7433388230814px 282.7433388230814px;stroke-dashoffset:0px" d="
+      M 50,50
+      m 0,-45
+      a 45,45 0 1 1 0,90
+      a 45,45 0 1 1 0,-90
+    " stroke-width="10" fill-opacity="0"></path><path class="CircularProgressbar-path" style="stroke-linecap:butt;stroke:#3B7CC3;stroke-dasharray:282.7433388230814px 282.7433388230814px;stroke-dashoffset:187.6px" d="
+      M 50,50
+      m 0,-45
+      a 45,45 0 1 1 0,90
+      a 45,45 0 1 1 0,-90
+    " stroke-width="10" fill-opacity="0"></path><text class="CircularProgressbar-text" style="fill:#3B7CC3" x="50" y="50">33%</text></svg></div>
+                            </div>
+                        </div>
+                        <p class="text-center text-gray-600 text-sm font-franzSansLight">We scaled different actors based on 3 dimensions and sub parameters highest score index score being “100” and lowest being “0”.</p>
+                    </div>
+                    <div class="infographic-vertical-divider lg:w-1/2 xl:w-2/5 bg-brandGray py-16 pt-0 lg:pt-16 lg:px-16 relative">
+                        <h2 class=" text-center font-franzSansExtraBold tracking-wider text-darkGrape text-3xl mb-2 uppercase">Nerd Numbers</h2>
+                        <div class="divider-colour-border index-border-width flex mx-auto mb-12"></div>
+                        <div class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-2 lg:gap-x-6 gap-y-12 mb-12">
+                            <div class="flex flex-col">
+                                <h2 class="font-franzSansMedium text-xl mb-3 text-center tracking-wider">Countries</h2>
+                                <h1 class="text-center text-red font-franzSansBold text-brightRed text-5xl tracking-wider">139</h1>
+                            </div>
+                            <div class="flex flex-col">
+                                <h2 class="font-franzSansMedium text-xl mb-3 text-center tracking-wider">Regions</h2>
+                                <h1 class="text-center text-red font-franzSansBold text-brightRed text-5xl tracking-wider">116</h1>
+                            </div>
+                            <div class="flex flex-col">
+                                <h2 class="font-franzSansMedium text-xl mb-3 text-center tracking-wider">Cities</h2>
+                                <h1 class="text-center text-red font-franzSansBold text-brightRed text-5xl tracking-wider">241</h1>
+                            </div>
+                            <div class="flex flex-col">
+                                <h2 class="font-franzSansMedium text-xl mb-3 text-center tracking-wider">Companies</h2>
+                                <h1 class="text-center text-red font-franzSansBold text-brightRed text-5xl tracking-wider">800</h1>
+                            </div>
+                        </div>
+                        <p class="text-center text-gray-600 text-sm font-franzSansLight">Have made progress towards having a NET ZERO target.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="container-max">
+            <h2 id="companies-table" class="text-center font-franzSansExtraBold tracking-wider text-darkGrape text-3xl pb-3 uppercase">OUR API</h2>
+            <div class="divider-colour-border companies-title-width flex mx-auto mb-12"></div>
+            <h3 class="font-franzSansMedium text-center leading-8 mx-auto max-w-4xl text-lg mb-14">We provide an overview of the 2,000 largest publicly-traded companies in the world by revenue. <br/>For those we find with a "net zero" target, we analyse their key components and provide the "GREEN INDEX" for that respective company in our API.<br>For more in-detailed information visit our API Documentation.<br>Sample database is provided below.</h3>
+            <div class="flex flex-col space-y-10 mb-8 md:flex-row md:justify-between md:items-center md:space-y-0 md:space-x-0"><a href="/apidoc.html" class="bg-brandGray md:px-8 w-54 text-center py-4 font-franzSansBold text-mapBlue uppercase rounded-lg">API DOCUMENTATION</a>
+              </div>
+            <div class="overflow-x-auto table-responsive mb-8">
+                <div class="">
+                    <table class="mb-8 entity-table h-1 table-fixed w-full text-sm" role="table">
+                        <thead>
+                            <tr role="row" class="bg-darkGrape">
+                                <th colSpan="1" role="columnheader" class="text-left uppercase w-[100px] rounded-l-xl ">
+                                    <div class="px-2 py-4 grid grid-cols-1 auto-rows-fr h-full text-white">
+                                        <div class="flex items-end"><span class="block">Name</span></div>
+                                        <div class="flex items-center">
+                                    </div>
+                                </th>
+                                <th colSpan="1" role="columnheader" class="text-left uppercase w-[100px]  ">
+                                    <div class="px-2 py-4 grid grid-cols-1 auto-rows-fr h-full text-white">
+                                        <div class="flex items-end"><span class="block">Country</span></div>
+                                        <div class="flex items-center">
+                                        </div>
+                                    </div>
+                                </th>
+                                <th colSpan="1" role="columnheader" class="text-left uppercase w-[100px]  ">
+                                    <div class="px-2 py-4 grid grid-cols-1 auto-rows-fr h-full text-white">
+                                        <div class="flex items-end"><span class="block">Sector</span></div>
+                                        <div class="flex items-center">
+
+                                        </div>
+                                    </div>
+                                </th>
+                                <th colSpan="1" role="columnheader" class="text-left uppercase w-[100px]  ">
+                                    <div class="px-2 py-4 grid grid-cols-1 auto-rows-fr h-full text-white">
+                                        <div class="flex items-end"><span class="block">Annual revenue</span></div>
+                                        <div class="flex items-center">
+
+                                    </div>
+                                </th>
+                                <th colSpan="1" role="columnheader" class="text-left uppercase w-[100px]  ">
+                                    <div class="px-2 py-4 grid grid-cols-1 auto-rows-fr h-full text-white">
+                                        <div class="flex items-end"><span class="block">Target year</span></div>
+                                        <div class="flex items-center">
+
+                                        </div>
+                                    </div>
+                                </th>
+                                <th colSpan="1" role="columnheader" class="text-left uppercase w-[100px]  ">
+                                    <div class="px-2 py-4 grid grid-cols-1 auto-rows-fr h-full text-white">
+                                        <div class="flex items-end"><span class="block">Target Type</span></div>
+                                        <div class="flex items-center">
+
+                                        </div>
+                                    </div>
+                                </th>
+                                <th colSpan="1" role="columnheader" class="text-left uppercase w-[100px]  ">
+                                    <div class="px-2 py-4 grid grid-cols-1 auto-rows-fr h-full text-white">
+                                        <div class="flex items-end"><span class="block">End Target Status</span></div>
+                                        <div class="flex items-center">
+
+                                    </div>
+                                </th>
+                                <th colSpan="1" role="columnheader" class="text-left uppercase w-[100px]  ">
+                                    <div class="px-2 py-4 grid grid-cols-1 auto-rows-fr h-full text-white">
+                                        <div class="flex items-end"><span class="block">Interim target</span></div>
+                                        <div class="flex items-center">
+
+                                        </div>
+                                    </div>
+                                </th>
+                                <th colSpan="1" role="columnheader" class="text-left uppercase w-[100px]  ">
+                                    <div class="px-2 py-4 grid grid-cols-1 auto-rows-fr h-full text-white">
+                                        <div class="flex items-end"><span class="block">Detailed plan</span></div>
+                                        <div class="flex items-center">
+
+                                    </div>
+                                </th>
+                                <th colSpan="1" role="columnheader" class="text-left uppercase w-[100px]  ">
+                                    <div class="px-2 py-4 grid grid-cols-1 auto-rows-fr h-full text-white">
+                                        <div class="flex items-end"><span class="block">Reporting mechanism</span></div>
+                                        <div class="flex items-center">
+
+                                    </div>
+                                </th>
+                                <th colSpan="1" role="columnheader" class="text-left uppercase w-[100px]  ">
+                                    <div class="px-2 py-4 grid grid-cols-1 auto-rows-fr h-full text-white">
+                                        <div class="flex items-end"><span class="block">Scope 3 coverage</span></div>
+                                        <div class="flex items-center">
+
+                                    </div>
+                                </th>
+                                <th colSpan="1" role="columnheader" class="text-left uppercase w-[100px]  rounded-r-xl">
+                                    <div class="px-2 py-4 grid grid-cols-1 auto-rows-fr h-full text-white">
+                                        <div class="flex items-end"><span class="block">Calculated &ensp;Green Index</span></div>
+                                        <div class="flex items-center">
+
+                                    </div>
+                                </th>
+                            </tr>
+                        </thead>
+                        <tbody class="main-tbody" role="rowgroup">
+                            <tr class="table-border-tr" role="row">
+                                <td class=" px-2 py-4 font-franzSansMedium" role="cell"><a class="valid-link underline text-oceanBlue" href="/companies/walmart-com-0147">Walmart</a></td>
+                                <td class=" px-2 py-4 font-franzSansMedium" role="cell">USA</td>
+                                <td class=" px-2 py-4 font-franzSansMedium" role="cell">Retail</td>
+                                <td class=" px-2 py-4 font-franzSansMedium" role="cell">$559bn</td>
+                                <td class=" px-2 py-4 font-franzSansMedium" role="cell">2040</td>
+                                <td class=" px-2 py-4 font-franzSansMedium" role="cell">Net zero</td>
+                                <td class=" px-2 py-4 font-franzSansMedium" role="cell">In corporate strategy</td>
+                                <td class=" px-2 py-4 font-franzSansMedium" role="cell">2025</td>
+                                <td class=" px-2 py-4 font-franzSansMedium" role="cell"><span class="bg-amber-500 rounded-full w-5 h-5 block mx-auto" title="Yes" aria-label="Yes"></span></td>
+                                <td class=" px-2 py-4 font-franzSansMedium" role="cell"><span class="bg-emerald-500 rounded-full w-5 h-5 block mx-auto" title="Annual reporting" aria-label="Annual reporting"></span></td>
+                                <td class=" px-2 py-4 font-franzSansMedium" role="cell"><span class="bg-red-500 rounded-full w-5 h-5 block mx-auto" title="No" aria-label="No"></span></td>
+                                <td class=" px-2 py-4 font-franzSansMedium" role="cell">&emsp;&emsp;&emsp;&ensp;71</span></td>
+                            </tr>
+                            <tr class="table-border-tr" role="row">
+                                <td class=" px-2 py-4 font-franzSansMedium" role="cell"><a class="valid-link underline text-oceanBlue" href="/companies/royal-dutch-shell-com-0093">Royal Dutch Shell</a></td>
+                                <td class=" px-2 py-4 font-franzSansMedium" role="cell">NLD</td>
+                                <td class=" px-2 py-4 font-franzSansMedium" role="cell">Fossil Fuels</td>
+                                <td class=" px-2 py-4 font-franzSansMedium" role="cell">$421bn</td>
+                                <td class=" px-2 py-4 font-franzSansMedium" role="cell">2050</td>
+                                <td class=" px-2 py-4 font-franzSansMedium" role="cell">Net zero</td>
+                                <td class=" px-2 py-4 font-franzSansMedium" role="cell">In corporate strategy</td>
+                                <td class=" px-2 py-4 font-franzSansMedium" role="cell">2030</td>
+                                <td class=" px-2 py-4 font-franzSansMedium" role="cell"><span class="bg-amber-500 rounded-full w-5 h-5 block mx-auto" title="Yes" aria-label="Yes"></span></td>
+                                <td class=" px-2 py-4 font-franzSansMedium" role="cell"><span class="bg-emerald-500 rounded-full w-5 h-5 block mx-auto" title="Annual reporting" aria-label="Annual reporting"></span></td>
+                                <td class=" px-2 py-4 font-franzSansMedium" role="cell"><span class="bg-amber-500 rounded-full w-5 h-5 block mx-auto" title="Partial" aria-label="Partial"></span></td>
+                                <td class=" px-2 py-4 font-franzSansMedium" role="cell">&emsp;&emsp;&emsp;&ensp;71</span></td>
+                            </tr>
+                            <tr class="table-border-tr" role="row">
+                                <td class=" px-2 py-4 font-franzSansMedium" role="cell"><a class="valid-link underline text-oceanBlue" href="/companies/apple-com-0150">Apple</a></td>
+                                <td class=" px-2 py-4 font-franzSansMedium" role="cell">USA</td>
+                                <td class=" px-2 py-4 font-franzSansMedium" role="cell">Retail</td>
+                                <td class=" px-2 py-4 font-franzSansMedium" role="cell">$379bn</td>
+                                <td class=" px-2 py-4 font-franzSansMedium" role="cell">2030</td>
+                                <td class=" px-2 py-4 font-franzSansMedium" role="cell">Carbon neutral(ity)</td>
+                                <td class=" px-2 py-4 font-franzSansMedium" role="cell">In corporate strategy</td>
+                                <td class=" px-2 py-4 font-franzSansMedium" role="cell">2030</td>
+                                <td class=" px-2 py-4 font-franzSansMedium" role="cell"><span class="bg-amber-500 rounded-full w-5 h-5 block mx-auto" title="Yes" aria-label="Yes"></span></td>
+                                <td class=" px-2 py-4 font-franzSansMedium" role="cell"><span class="bg-red-500 rounded-full w-5 h-5 block mx-auto"></span></td>
+                                <td class=" px-2 py-4 font-franzSansMedium" role="cell"><span class="bg-emerald-500 rounded-full w-5 h-5 block mx-auto" title="Yes" aria-label="Yes"></span></td>
+                                <td class=" px-2 py-4 font-franzSansMedium" role="cell">&emsp;&emsp;&emsp;&ensp;42</span></td>
+                            </tr>
+                            <tr class="table-border-tr" role="row">
+                                <td class=" px-2 py-4 font-franzSansMedium" role="cell"><a class="valid-link underline text-oceanBlue" href="/companies/saudi-aramco-com-0469">Saudi Aramco</a></td>
+                                <td class=" px-2 py-4 font-franzSansMedium" role="cell">SAU</td>
+                                <td class=" px-2 py-4 font-franzSansMedium" role="cell">Fossil Fuels</td>
+                                <td class=" px-2 py-4 font-franzSansMedium" role="cell">$330bn</td>
+                                <td class=" px-2 py-4 font-franzSansMedium" role="cell">2050</td>
+                                <td class=" px-2 py-4 font-franzSansMedium" role="cell">Net zero</td>
+                                <td class=" px-2 py-4 font-franzSansMedium" role="cell">Declaration / pledge</td>
+                                <td class=" px-2 py-4 font-franzSansMedium" role="cell"></td>
+                                <td class=" px-2 py-4 font-franzSansMedium" role="cell"><span class="bg-red-500 rounded-full w-5 h-5 block mx-auto" title="No" aria-label="No"></span></td>
+                                <td class=" px-2 py-4 font-franzSansMedium" role="cell"><span class="bg-emerald-500 rounded-full w-5 h-5 block mx-auto" title="Annual reporting" aria-label="Annual reporting"></span></td>
+                                <td class=" px-2 py-4 font-franzSansMedium" role="cell"><span class="bg-red-500 rounded-full w-5 h-5 block mx-auto" title="No" aria-label="No"></span></td>
+                                <td class=" px-2 py-4 font-franzSansMedium" role="cell">&emsp;&emsp;&emsp;&ensp;25</span></td>
+                            </tr>
+                            <tr class="table-border-tr" role="row">
+                                <td class=" px-2 py-4 font-franzSansMedium" role="cell"><a class="valid-link underline text-oceanBlue" href="/companies/unitedhealth-com-0476">UnitedHealth</a></td>
+                                <td class=" px-2 py-4 font-franzSansMedium" role="cell">USA</td>
+                                <td class=" px-2 py-4 font-franzSansMedium" role="cell">Services</td>
+                                <td class=" px-2 py-4 font-franzSansMedium" role="cell">$298bn</td>
+                                <td class=" px-2 py-4 font-franzSansMedium" role="cell">2035</td>
+                                <td class=" px-2 py-4 font-franzSansMedium" role="cell">Net zero</td>
+                                <td class=" px-2 py-4 font-franzSansMedium" role="cell">Declaration / pledge</td>
+                                <td class=" px-2 py-4 font-franzSansMedium" role="cell">2030</td>
+                                <td class=" px-2 py-4 font-franzSansMedium" role="cell"><span class="bg-amber-500 rounded-full w-5 h-5 block mx-auto" title="Yes" aria-label="Yes"></span></td>
+                                <td class=" px-2 py-4 font-franzSansMedium" role="cell"><span class="bg-emerald-500 rounded-full w-5 h-5 block mx-auto" title="Annual reporting" aria-label="Annual reporting"></span></td>
+                                <td class=" px-2 py-4 font-franzSansMedium" role="cell"><span class="bg-red-500 rounded-full w-5 h-5 block mx-auto" title="Not Specified" aria-label="Not Specified"></span></td>
+                                <td class=" px-2 py-4 font-franzSansMedium" role="cell">&emsp;&emsp;&emsp;&ensp;54</span></td>
+                            </tr>
+                            <tr class="table-border-tr" role="row">
+                                <td class=" px-2 py-4 font-franzSansMedium" role="cell"><a class="valid-link underline text-oceanBlue" href="/companies/amazon-com-0121">Amazon</a></td>
+                                <td class=" px-2 py-4 font-franzSansMedium" role="cell">USA</td>
+                                <td class=" px-2 py-4 font-franzSansMedium" role="cell">Retail</td>
+                                <td class=" px-2 py-4 font-franzSansMedium" role="cell">$296bn</td>
+                                <td class=" px-2 py-4 font-franzSansMedium" role="cell">2040</td>
+                                <td class=" px-2 py-4 font-franzSansMedium" role="cell">Net zero</td>
+                                <td class=" px-2 py-4 font-franzSansMedium" role="cell">In corporate strategy</td>
+                                <td class=" px-2 py-4 font-franzSansMedium" role="cell">2025</td>
+                                <td class=" px-2 py-4 font-franzSansMedium" role="cell"><span class="bg-amber-500 rounded-full w-5 h-5 block mx-auto" title="Yes" aria-label="Yes"></span></td>
+                                <td class=" px-2 py-4 font-franzSansMedium" role="cell"><span class="bg-emerald-500 rounded-full w-5 h-5 block mx-auto" title="Annual reporting" aria-label="Annual reporting"></span></td>
+                                <td class=" px-2 py-4 font-franzSansMedium" role="cell"><span class="bg-amber-500 rounded-full w-5 h-5 block mx-auto" title="Partial" aria-label="Partial"></span></td>
+                                <td class=" px-2 py-4 font-franzSansMedium" role="cell">&emsp;&emsp;&emsp;&ensp;57</span></td>
+                            </tr>
+                            <tr class="table-border-tr" role="row">
+                                <td class=" px-2 py-4 font-franzSansMedium" role="cell"><a class="valid-link underline text-oceanBlue" href="/companies/petrochina-co-com-0480">PetroChina Co</a></td>
+                                <td class=" px-2 py-4 font-franzSansMedium" role="cell">CHN</td>
+                                <td class=" px-2 py-4 font-franzSansMedium" role="cell">Fossil Fuels</td>
+                                <td class=" px-2 py-4 font-franzSansMedium" role="cell">$281bn</td>
+                                <td class=" px-2 py-4 font-franzSansMedium" role="cell">2050</td>
+                                <td class=" px-2 py-4 font-franzSansMedium" role="cell">Zero carbon</td>
+                                <td class=" px-2 py-4 font-franzSansMedium" role="cell">Proposed / in discussion</td>
+                                <td class=" px-2 py-4 font-franzSansMedium" role="cell">2025</td>
+                                <td class=" px-2 py-4 font-franzSansMedium" role="cell"><span class="bg-red-500 rounded-full w-5 h-5 block mx-auto" title="No" aria-label="No"></span></td>
+                                <td class=" px-2 py-4 font-franzSansMedium" role="cell"><span class="bg-emerald-500 rounded-full w-5 h-5 block mx-auto" title="Annual reporting" aria-label="Annual reporting"></span></td>
+                                <td class=" px-2 py-4 font-franzSansMedium" role="cell"><span class="bg-red-500 rounded-full w-5 h-5 block mx-auto" title="Not Specified" aria-label="Not Specified"></span></td>
+                                <td class=" px-2 py-4 font-franzSansMedium" role="cell">&emsp;&emsp;&emsp;&ensp;22</span></td>
+                            </tr>
+                            <tr class="table-border-tr" role="row">
+                                <td class=" px-2 py-4 font-franzSansMedium" role="cell"><a class="valid-link underline text-oceanBlue" href="/companies/exxon-mobil-com-0472">Exxon Mobil</a></td>
+                                <td class=" px-2 py-4 font-franzSansMedium" role="cell">USA</td>
+                                <td class=" px-2 py-4 font-franzSansMedium" role="cell">Fossil Fuels</td>
+                                <td class=" px-2 py-4 font-franzSansMedium" role="cell">$281bn</td>
+                                <td class=" px-2 py-4 font-franzSansMedium" role="cell">2050</td>
+                                <td class=" px-2 py-4 font-franzSansMedium" role="cell">Net zero</td>
+                                <td class=" px-2 py-4 font-franzSansMedium" role="cell">In corporate strategy</td>
+                                <td class=" px-2 py-4 font-franzSansMedium" role="cell">2030</td>
+                                <td class=" px-2 py-4 font-franzSansMedium" role="cell"><span class="bg-emerald-500 rounded-full w-5 h-5 block mx-auto" title="Yes" aria-label="Yes"></span></td>
+                                <td class=" px-2 py-4 font-franzSansMedium" role="cell"><span class="bg-emerald-500 rounded-full w-5 h-5 block mx-auto" title="Annual reporting" aria-label="Annual reporting"></span></td>
+                                <td class=" px-2 py-4 font-franzSansMedium" role="cell"><span class="bg-amber-500 rounded-full w-5 h-5 block mx-auto" title="Partial" aria-label="Partial"></span></td>
+                                <td class=" px-2 py-4 font-franzSansMedium" role="cell">&emsp;&emsp;&emsp;&ensp;85</span></td>
+                            </tr>
+                            <tr class="table-border-tr" role="row">
+                                <td class=" px-2 py-4 font-franzSansMedium" role="cell"><a class="valid-link underline text-oceanBlue" href="/companies/toyota-motor-com-0175">Toyota Motor</a></td>
+                                <td class=" px-2 py-4 font-franzSansMedium" role="cell">JPN</td>
+                                <td class=" px-2 py-4 font-franzSansMedium" role="cell">Manufacturing</td>
+                                <td class=" px-2 py-4 font-franzSansMedium" role="cell">$281bn</td>
+                                <td class=" px-2 py-4 font-franzSansMedium" role="cell">2050</td>
+                                <td class=" px-2 py-4 font-franzSansMedium" role="cell">Carbon neutral(ity)</td>
+                                <td class=" px-2 py-4 font-franzSansMedium" role="cell">In corporate strategy</td>
+                                <td class=" px-2 py-4 font-franzSansMedium" role="cell">2030</td>
+                                <td class=" px-2 py-4 font-franzSansMedium" role="cell"><span class="bg-amber-500 rounded-full w-5 h-5 block mx-auto" title="Yes" aria-label="Yes"></span></td>
+                                <td class=" px-2 py-4 font-franzSansMedium" role="cell"><span class="bg-emerald-500 rounded-full w-5 h-5 block mx-auto" title="Annual reporting" aria-label="Annual reporting"></span></td>
+                                <td class=" px-2 py-4 font-franzSansMedium" role="cell"><span class="bg-red-500 rounded-full w-5 h-5 block mx-auto" title="Not Specified" aria-label="Not Specified"></span></td>
+                                <td class=" px-2 py-4 font-franzSansMedium" role="cell">&emsp;&emsp;&emsp;&ensp;57</span></td>
+                            </tr>
+                            <tr class="table-border-tr" role="row">
+                                <td class=" px-2 py-4 font-franzSansMedium" role="cell"><a class="valid-link underline text-oceanBlue" href="/companies/bp-com-0255">BP</a></td>
+                                <td class=" px-2 py-4 font-franzSansMedium" role="cell">GBR</td>
+                                <td class=" px-2 py-4 font-franzSansMedium" role="cell">Fossil Fuels</td>
+                                <td class=" px-2 py-4 font-franzSansMedium" role="cell">$272bn</td>
+                                <td class=" px-2 py-4 font-franzSansMedium" role="cell">2050</td>
+                                <td class=" px-2 py-4 font-franzSansMedium" role="cell">Net zero</td>
+                                <td class=" px-2 py-4 font-franzSansMedium" role="cell">In corporate strategy</td>
+                                <td class=" px-2 py-4 font-franzSansMedium" role="cell">2025</td>
+                                <td class=" px-2 py-4 font-franzSansMedium" role="cell"><span class="bg-amber-500 rounded-full w-5 h-5 block mx-auto" title="Yes" aria-label="Yes"></span></td>
+                                <td class=" px-2 py-4 font-franzSansMedium" role="cell"><span class="bg-emerald-500 rounded-full w-5 h-5 block mx-auto" title="Annual reporting" aria-label="Annual reporting"></span></td>
+                                <td class=" px-2 py-4 font-franzSansMedium" role="cell"><span class="bg-amber-500 rounded-full w-5 h-5 block mx-auto" title="Partial" aria-label="Partial"></span></td>
+                                <td class=" px-2 py-4 font-franzSansMedium" role="cell">&emsp;&emsp;&emsp;&ensp;71</span></td>
+                            </tr>
+                            <tr class="table-border-tr" role="row">
+                                <td class=" px-2 py-4 font-franzSansMedium" role="cell"><a class="valid-link underline text-oceanBlue" href="/companies/sinopec-com-0492">Sinopec</a></td>
+                                <td class=" px-2 py-4 font-franzSansMedium" role="cell">CHN</td>
+                                <td class=" px-2 py-4 font-franzSansMedium" role="cell">Fossil Fuels</td>
+                                <td class=" px-2 py-4 font-franzSansMedium" role="cell">$271bn</td>
+                                <td class=" px-2 py-4 font-franzSansMedium" role="cell">2050</td>
+                                <td class=" px-2 py-4 font-franzSansMedium" role="cell">Carbon neutral(ity)</td>
+                                <td class=" px-2 py-4 font-franzSansMedium" role="cell">Proposed / in discussion</td>
+                                <td class=" px-2 py-4 font-franzSansMedium" role="cell">2030</td>
+                                <td class=" px-2 py-4 font-franzSansMedium" role="cell"><span class="bg-amber-500 rounded-full w-5 h-5 block mx-auto" title="Yes" aria-label="Yes"></span></td>
+                                <td class=" px-2 py-4 font-franzSansMedium" role="cell"><span class="bg-emerald-500 rounded-full w-5 h-5 block mx-auto" title="Annual reporting" aria-label="Annual reporting"></span></td>
+                                <td class=" px-2 py-4 font-franzSansMedium" role="cell"><span class="bg-red-500 rounded-full w-5 h-5 block mx-auto" title="Not Specified" aria-label="Not Specified"></span></td>
+                                <td class=" px-2 py-4 font-franzSansMedium" role="cell">&emsp;&emsp;&emsp;&ensp;80</span></td>
+                            </tr>
+                            <tr class="table-border-tr" role="row">
+                                <td class=" px-2 py-4 font-franzSansMedium" role="cell"><a class="valid-link underline text-oceanBlue" href="/companies/cvs-health-com-0181">CVS Health</a></td>
+                                <td class=" px-2 py-4 font-franzSansMedium" role="cell">USA</td>
+                                <td class=" px-2 py-4 font-franzSansMedium" role="cell">Retail</td>
+                                <td class=" px-2 py-4 font-franzSansMedium" role="cell">$269bn</td>
+                                <td class=" px-2 py-4 font-franzSansMedium" role="cell">2050</td>
+                                <td class=" px-2 py-4 font-franzSansMedium" role="cell">Net zero</td>
+                                <td class=" px-2 py-4 font-franzSansMedium" role="cell">In corporate strategy</td>
+                                <td class=" px-2 py-4 font-franzSansMedium" role="cell">2030</td>
+                                <td class=" px-2 py-4 font-franzSansMedium" role="cell"><span class="bg-amber-500 rounded-full w-5 h-5 block mx-auto" title="Yes" aria-label="Yes"></span></td>
+                                <td class=" px-2 py-4 font-franzSansMedium" role="cell"><span class="bg-emerald-500 rounded-full w-5 h-5 block mx-auto" title="Annual reporting" aria-label="Annual reporting"></span></td>
+                                <td class=" px-2 py-4 font-franzSansMedium" role="cell"><span class="bg-emerald-500 rounded-full w-5 h-5 block mx-auto" title="Yes" aria-label="Yes"></span></td>
+                                <td class=" px-2 py-4 font-franzSansMedium" role="cell">&emsp;&emsp;&emsp;&ensp;71</span></td>
+                            </tr>
+                            <tr class="table-border-tr" role="row">
+                                <td class=" px-2 py-4 font-franzSansMedium" role="cell"><a class="valid-link underline text-oceanBlue" href="/companies/alphabet-com-0176">Alphabet</a></td>
+                                <td class=" px-2 py-4 font-franzSansMedium" role="cell">USA</td>
+                                <td class=" px-2 py-4 font-franzSansMedium" role="cell">Services</td>
+                                <td class=" px-2 py-4 font-franzSansMedium" role="cell">$257bn</td>
+                                <td class=" px-2 py-4 font-franzSansMedium" role="cell">2030</td>
+                                <td class=" px-2 py-4 font-franzSansMedium" role="cell">Net zero</td>
+                                <td class=" px-2 py-4 font-franzSansMedium" role="cell">In corporate strategy</td>
+                                <td class=" px-2 py-4 font-franzSansMedium" role="cell"></td>
+                                <td class=" px-2 py-4 font-franzSansMedium" role="cell"><span class="bg-amber-500 rounded-full w-5 h-5 block mx-auto" title="Yes" aria-label="Yes"></span></td>
+                                <td class=" px-2 py-4 font-franzSansMedium" role="cell"><span class="bg-emerald-500 rounded-full w-5 h-5 block mx-auto" title="Annual reporting" aria-label="Annual reporting"></span></td>
+                                <td class=" px-2 py-4 font-franzSansMedium" role="cell"><span class="bg-emerald-500 rounded-full w-5 h-5 block mx-auto" title="Yes" aria-label="Yes"></span></td>
+                                <td class=" px-2 py-4 font-franzSansMedium" role="cell">&emsp;&emsp;&emsp;&ensp;71</span></td>
+                            </tr>
+                            <tr class="table-border-tr" role="row">
+                                <td class=" px-2 py-4 font-franzSansMedium" role="cell"><a class="valid-link underline text-oceanBlue" href="/companies/volkswagen-com-0177">Volkswagen</a></td>
+                                <td class=" px-2 py-4 font-franzSansMedium" role="cell">DEU</td>
+                                <td class=" px-2 py-4 font-franzSansMedium" role="cell">Manufacturing</td>
+                                <td class=" px-2 py-4 font-franzSansMedium" role="cell">$254bn</td>
+                                <td class=" px-2 py-4 font-franzSansMedium" role="cell">2050</td>
+                                <td class=" px-2 py-4 font-franzSansMedium" role="cell">Carbon neutral(ity)</td>
+                                <td class=" px-2 py-4 font-franzSansMedium" role="cell">In corporate strategy</td>
+                                <td class=" px-2 py-4 font-franzSansMedium" role="cell">2025</td>
+                                <td class=" px-2 py-4 font-franzSansMedium" role="cell"><span class="bg-amber-500 rounded-full w-5 h-5 block mx-auto" title="Yes" aria-label="Yes"></span></td>
+                                <td class=" px-2 py-4 font-franzSansMedium" role="cell"><span class="bg-emerald-500 rounded-full w-5 h-5 block mx-auto" title="Annual reporting" aria-label="Annual reporting"></span></td>
+                                <td class=" px-2 py-4 font-franzSansMedium" role="cell"><span class="bg-emerald-500 rounded-full w-5 h-5 block mx-auto" title="Yes" aria-label="Yes"></span></td>
+                                <td class=" px-2 py-4 font-franzSansMedium" role="cell">&emsp;&emsp;&emsp;&ensp;71</span></td>
+                            </tr>
+                            <tr class="table-border-tr" role="row">
+                                <td class=" px-2 py-4 font-franzSansMedium" role="cell"><a class="valid-link underline text-oceanBlue" href="/companies/berkshire-hathaway-com-0467">Berkshire Hathaway</a></td>
+                                <td class=" px-2 py-4 font-franzSansMedium" role="cell">USA</td>
+                                <td class=" px-2 py-4 font-franzSansMedium" role="cell">Services</td>
+                                <td class=" px-2 py-4 font-franzSansMedium" role="cell">$246bn</td>
+                                <td class=" px-2 py-4 font-franzSansMedium" role="cell">2050</td>
+                                <td class=" px-2 py-4 font-franzSansMedium" role="cell">Other</td>
+                                <td class=" px-2 py-4 font-franzSansMedium" role="cell">In corporate strategy</td>
+                                <td class=" px-2 py-4 font-franzSansMedium" role="cell"></td>
+                                <td class=" px-2 py-4 font-franzSansMedium" role="cell"><span class="bg-red-500 rounded-full w-5 h-5 block mx-auto" title="No" aria-label="No"></span></td>
+                                <td class=" px-2 py-4 font-franzSansMedium" role="cell"><span class="bg-amber-500 rounded-full w-5 h-5 block mx-auto" title="Less than annual reporting" aria-label="Less than annual reporting"></span></td>
+                                <td class=" px-2 py-4 font-franzSansMedium" role="cell"><span class="bg-red-500 rounded-full w-5 h-5 block mx-auto" title="Not Specified" aria-label="Not Specified"></span></td>
+                                <td class=" px-2 py-4 font-franzSansMedium" role="cell">&emsp;&emsp;&emsp;&ensp;21</span></td>
+                            </tr>
+                            <tr class="table-border-tr" role="row">
+                                <td class="opacity-50 px-2 py-4 font-franzSansMedium" role="cell">McKesson</td>
+                                <td class="opacity-50 px-2 py-4 font-franzSansMedium" role="cell">USA</td>
+                                <td class="opacity-50 px-2 py-4 font-franzSansMedium" role="cell">Biotech, health care &amp; pharma</td>
+                                <td class="opacity-50 px-2 py-4 font-franzSansMedium" role="cell">$225bn</td>
+                                <td class="opacity-50 px-2 py-4 font-franzSansMedium" role="cell"></td>
+                                <td class="opacity-50 px-2 py-4 font-franzSansMedium" role="cell">No target</td>
+                                <td class="opacity-50 px-2 py-4 font-franzSansMedium" role="cell"></td>
+                                <td class="opacity-50 px-2 py-4 font-franzSansMedium" role="cell"></td>
+                                <td class="opacity-50 px-2 py-4 font-franzSansMedium" role="cell"></td>
+                                <td class="opacity-50 px-2 py-4 font-franzSansMedium" role="cell"></td>
+                                <td class="opacity-50 px-2 py-4 font-franzSansMedium" role="cell"></td>
+                                <td class=" px-2 py-4 font-franzSansMedium" role="cell">&emsp;&emsp;&emsp;&ensp;42</span></td>
+                            </tr>
+                            <tr class="table-border-tr" role="row">
+                                <td class=" px-2 py-4 font-franzSansMedium" role="cell"><a class="valid-link underline text-oceanBlue" href="/companies/china-state-construction-com-0503">China State Construction</a></td>
+                                <td class=" px-2 py-4 font-franzSansMedium" role="cell">CHN</td>
+                                <td class=" px-2 py-4 font-franzSansMedium" role="cell">Infrastructure</td>
+                                <td class=" px-2 py-4 font-franzSansMedium" role="cell">$215bn</td>
+                                <td class=" px-2 py-4 font-franzSansMedium" role="cell">2060</td>
+                                <td class=" px-2 py-4 font-franzSansMedium" role="cell">Carbon neutral(ity)</td>
+                                <td class=" px-2 py-4 font-franzSansMedium" role="cell">Declaration / pledge</td>
+                                <td class=" px-2 py-4 font-franzSansMedium" role="cell">2025</td>
+                                <td class=" px-2 py-4 font-franzSansMedium" role="cell"><span class="bg-red-500 rounded-full w-5 h-5 block mx-auto" title="No" aria-label="No"></span></td>
+                                <td class=" px-2 py-4 font-franzSansMedium" role="cell"><span class="bg-emerald-500 rounded-full w-5 h-5 block mx-auto" title="Annual reporting" aria-label="Annual reporting"></span></td>
+                                <td class=" px-2 py-4 font-franzSansMedium" role="cell"><span class="bg-red-500 rounded-full w-5 h-5 block mx-auto" title="Not Specified" aria-label="Not Specified"></span></td>
+                                <td class=" px-2 py-4 font-franzSansMedium" role="cell">&emsp;&emsp;&emsp;&ensp;25</span></td>
+                            </tr>
+                            <tr class="table-border-tr" role="row">
+                                <td class=" px-2 py-4 font-franzSansMedium" role="cell"><a class="valid-link underline text-oceanBlue" href="/companies/samsung-electronics-co-com-0473">Samsung Electronics Co</a></td>
+                                <td class=" px-2 py-4 font-franzSansMedium" role="cell">KOR</td>
+                                <td class=" px-2 py-4 font-franzSansMedium" role="cell">Retail</td>
+                                <td class=" px-2 py-4 font-franzSansMedium" role="cell">$198bn</td>
+                                <td class=" px-2 py-4 font-franzSansMedium" role="cell">2020</td>
+                                <td class=" px-2 py-4 font-franzSansMedium" role="cell">Other</td>
+                                <td class=" px-2 py-4 font-franzSansMedium" role="cell">Achieved (self-declared)</td>
+                                <td class=" px-2 py-4 font-franzSansMedium" role="cell"></td>
+                                <td class=" px-2 py-4 font-franzSansMedium" role="cell"><span class="bg-red-500 rounded-full w-5 h-5 block mx-auto" title="No" aria-label="No"></span></td>
+                                <td class=" px-2 py-4 font-franzSansMedium" role="cell"><span class="bg-red-500 rounded-full w-5 h-5 block mx-auto" title="No reporting mechanism" aria-label="No reporting mechanism"></span></td>
+                                <td class=" px-2 py-4 font-franzSansMedium" role="cell"><span class="bg-emerald-500 rounded-full w-5 h-5 block mx-auto" title="Yes" aria-label="Yes"></span></td>
+                                <td class=" px-2 py-4 font-franzSansMedium" role="cell">&emsp;&emsp;&emsp;&ensp;48</span></td>
+                            </tr>
+                            <tr class="table-border-tr" role="row">
+                                <td class=" px-2 py-4 font-franzSansMedium" role="cell"><a class="valid-link underline text-oceanBlue" href="/companies/amerisourcebergen-com-0739">AmerisourceBergen</a></td>
+                                <td class=" px-2 py-4 font-franzSansMedium" role="cell">USA</td>
+                                <td class=" px-2 py-4 font-franzSansMedium" role="cell">Biotech, health care &amp; pharma</td>
+                                <td class=" px-2 py-4 font-franzSansMedium" role="cell">$195bn</td>
+                                <td class=" px-2 py-4 font-franzSansMedium" role="cell">2022</td>
+                                <td class=" px-2 py-4 font-franzSansMedium" role="cell">Emissions reduction target</td>
+                                <td class=" px-2 py-4 font-franzSansMedium" role="cell">In corporate strategy</td>
+                                <td class=" px-2 py-4 font-franzSansMedium" role="cell"></td>
+                                <td class=" px-2 py-4 font-franzSansMedium" role="cell"><span class="bg-red-500 rounded-full w-5 h-5 block mx-auto" title="No" aria-label="No"></span></td>
+                                <td class=" px-2 py-4 font-franzSansMedium" role="cell"><span class="bg-emerald-500 rounded-full w-5 h-5 block mx-auto" title="Annual reporting" aria-label="Annual reporting"></span></td>
+                                <td class=" px-2 py-4 font-franzSansMedium" role="cell"><span class="bg-red-500 rounded-full w-5 h-5 block mx-auto" title="No" aria-label="No"></span></td>
+                                <td class=" px-2 py-4 font-franzSansMedium" role="cell">&emsp;&emsp;&emsp;&ensp;20</span></td>
+                            </tr>
+                            <tr class="table-border-tr" role="row">
+                                <td class=" px-2 py-4 font-franzSansMedium" role="cell"><a class="valid-link underline text-oceanBlue" href="/companies/icbc-com-0465">ICBC</a></td>
+                                <td class=" px-2 py-4 font-franzSansMedium" role="cell">CHN</td>
+                                <td class=" px-2 py-4 font-franzSansMedium" role="cell">Services</td>
+                                <td class=" px-2 py-4 font-franzSansMedium" role="cell">$191bn</td>
+                                <td class=" px-2 py-4 font-franzSansMedium" role="cell">2060</td>
+                                <td class=" px-2 py-4 font-franzSansMedium" role="cell">Carbon neutral(ity)</td>
+                                <td class=" px-2 py-4 font-franzSansMedium" role="cell">In corporate strategy</td>
+                                <td class=" px-2 py-4 font-franzSansMedium" role="cell">2030</td>
+                                <td class=" px-2 py-4 font-franzSansMedium" role="cell"><span class="bg-amber-500 rounded-full w-5 h-5 block mx-auto" title="Yes" aria-label="Yes"></span></td>
+                                <td class=" px-2 py-4 font-franzSansMedium" role="cell"><span class="bg-emerald-500 rounded-full w-5 h-5 block mx-auto" title="Annual reporting" aria-label="Annual reporting"></span></td>
+                                <td class=" px-2 py-4 font-franzSansMedium" role="cell"><span class="bg-red-500 rounded-full w-5 h-5 block mx-auto" title="Not Specified" aria-label="Not Specified"></span></td>
+                                <td class=" px-2 py-4 font-franzSansMedium" role="cell">&emsp;&emsp;&emsp;&ensp;57</span></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </main>
+    </div>
+    <footer class="footer bg-darkGrape">
+        <div class="container py-2">
+            <div class="flex flex-col md:flex-row justify-between first border-b-2 border-white py-8">
+                <div class="flex flex-col"><a class="text-white font-franzSansSemiLight mb-4" href="/methodology.html" target="_blank">Methodology</a><a class="text-white font-franzSansSemiLight mb-4" href="/about.html" target="_blank">About Us</a></div>
+                <div
+                    class="mt-4 md:mt-0 flex flex-col md:flex-row items-start md:items-end"><a class="md:mr-12" href="/"><img width="398" height="89" src="/logo-white.png" alt="Logo"/></a>
+                    <div class="mt-4 md:mt-0 mb-4 flex flex-col items-center">
+                        <p class="text-white font-franzSansSemiLight mb-2 text-sm">Connect With Us</p>
+                        <div class="w-full flex justify-between"><a href="#" target="_blank" rel="noopener noreferrer"><img width="37" height="37" src="/twitter.svg" alt="Twitter logo"/></a><a href="#" target="_blank"
+                                rel="noopener noreferrer"><img width="37" height="37" src="/linkedin.svg" alt="LinkenIn logo"/></a></div>
+                    </div>
+            </div>
+        </div>
+        <div class="flex flex-col md:flex-row second">
+            <div class="flex flex-col md:flex-row justify-between md:items-center py-8 w-full">
+
+                <div>
+                    <p class="text-white font-franzSansSemiLight text-sm ">Copyright ©
+                        <!-- -->Pending
+                        <!-- -->. Private property of 'THE M.A.S.K'. Please do not yoink</a>.</p>
+                </div>
+            </div>
+        </div>
+        </div>
+    </footer>
+    </div>
+</body>
+
+</html>
